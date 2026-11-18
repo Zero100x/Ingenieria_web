@@ -9,6 +9,8 @@ export const metadata = {
   description: 'Encuentra repuestos OEM y de posventa en almacenes verificados de San Juan de Pasto con compatibilidad garantizada.',
 };
 
+export const dynamic = 'force-dynamic';
+
 async function FeaturedWarehousesList() {
   const stores = await fetchStores().catch(() => []);
   const warehouses = stores.map(st => {

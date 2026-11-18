@@ -48,5 +48,8 @@
     "@types/nodemailer": "^8.0.2",
     "@types/passport-jwt": "^4.0.1",
     "ts-node": "^10.9.2"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
