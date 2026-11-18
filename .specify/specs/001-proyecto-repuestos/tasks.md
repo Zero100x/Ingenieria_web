@@ -104,7 +104,7 @@
 | T-DOC-06 | [x] | Auditoría del frontend y casos de prueba E2E (exitosos y fallidos) con limitaciones conocidas | Criterio 05 | Integrante 2 | `docs/tests-frontend-e2e.md` |
 | T-DOC-07 | [x] | Script de humo del flujo principal contra la API (sin dependencias) | Criterio 05 | Integrante 2 | `scripts/e2e-smoke.mjs` |
 | T-DOC-08 | [x] | README de entrega (instalación, variables, usuarios de prueba, guion de demo) | Criterio 06 | Integrante 2 | `README.md` |
-| T-DOC-09 | [ ] | Ejecutar las pruebas en local y registrar el resultado obtenido en `docs/tests-frontend-e2e.md` y `docs/tests-backend.md` | Criterio 05 | Integrante 1 + 2 | columnas "Obtenido" |
+| T-DOC-09 | [~] | Ejecutar las pruebas en local y registrar el resultado obtenido; queda pendiente corregir y repetir la prueba de autorización de reservas | Criterio 05 | Integrante 1 + 2 | `docs/tests-e2e.md` (BUYER recibe 200 en vez de 403) |
 | T-DOC-10 | [ ] | Corregir defectos de seguridad T-INF-12, T-CAT-08, T-INV-08 y T-RES-05 en rama `fix/security-hardening` | Constitución §3.4 | Integrante 1 | — |
 
 ---
@@ -118,5 +118,5 @@
 | Inventario y CSV | 8 | 7 | 1 | 0 |
 | Reservas y Leads | 7 | 6 | 1 | 0 |
 | Frontend Next.js | 13 | 11 | 0 | 2 |
-| Pruebas y Documentación | 10 | 8 | 0 | 2 |
-| **Total** | **60** | **52** | **4** | **4** |
+| Pruebas y Documentación | 10 | 8 | 1 | 1 |
+| **Total** | **60** | **52** | **5** | **3** |

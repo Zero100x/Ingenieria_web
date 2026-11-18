@@ -166,7 +166,7 @@ export default function Navbar() {
             title="Bandeja de Comparación"
           >
             <span className="material-symbols-outlined text-[22px]">balance</span>
-            {comparedParts.length > 0 && (
+            {mounted && comparedParts.length > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-on-tertiary-container text-white font-mono text-[9px] font-bold rounded-full flex items-center justify-center">
                 {comparedParts.length}
               </span>

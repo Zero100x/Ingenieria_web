@@ -78,6 +78,7 @@ El detalle de módulos, modelo de datos y flujo de indexación está en el [plan
 | Tareas | [`.specify/specs/001-proyecto-repuestos/tasks.md`](.specify/specs/001-proyecto-repuestos/tasks.md) | 60 tareas por módulo, responsable, estado y archivo de evidencia. |
 | Pruebas backend | [`docs/tests-backend.md`](docs/tests-backend.md) | Auditoría de secretos y casos de API exitosos/fallidos. |
 | Pruebas frontend y E2E | [`docs/tests-frontend-e2e.md`](docs/tests-frontend-e2e.md) | Auditoría por vista, casos de UI, flujo E2E y limitaciones. |
+| Evidencia en vivo | [`docs/tests-e2e.md`](docs/tests-e2e.md) | Resultados reales de API, CSV, navegador y defectos pendientes. |
 
 ---
 
