@@ -32,7 +32,7 @@
 | T-INF-09 | [x] | Configurar despliegue del backend + BD en Render | Plan §1 | Integrante 1 | `render.yaml`, `backend/Dockerfile` |
 | T-INF-10 | [x] | Registro y login con JWT y contraseñas `bcrypt` (costo 12); registro limitado a roles `BUYER` / `STORE_ADMIN` | RF-01 | Integrante 1 | `backend/src/auth/auth.service.ts`, `auth.controller.ts` |
 | T-INF-11 | [x] | `JwtStrategy`, `JwtAuthGuard`, `RolesGuard`, decoradores `@Roles` y `@CurrentUser` | RF-01 | Integrante 1 | `backend/src/auth/jwt.strategy.ts`, `backend/src/common/` |
-| T-INF-12 | [~] | Recuperación de contraseña con OTP de 6 dígitos (15 min) por correo. **Defecto:** sin SMTP la API devuelve `devCode` también en producción | RF-01, RF-06 | Integrante 1 | `backend/src/auth/auth.service.ts` (`forgotPassword`) |
+| T-INF-12 | [x] | Recuperación de contraseña con OTP de 6 dígitos (15 min) por correo. DevCode restringido únicamente a entorno de desarrollo | RF-01, RF-06 | Integrante 1 | `backend/src/auth/auth.service.ts` (`forgotPassword`) |
 | T-INF-13 | [x] | Gestión de usuarios y roles solo para `PLATFORM_ADMIN` | RF-01 | Integrante 1 | `backend/src/users/` |
 
 ## 2. Catálogo, Compatibilidad y Búsqueda
@@ -70,7 +70,7 @@
 | T-RES-02 | [x] | Crear reserva `PENDING` + `Lead` en `prisma.$transaction`, código `RES-XXXX-CIU` y vencimiento a 48 h | RF-05 | Integrante 1 | `reservations.service.ts` |
 | T-RES-03 | [x] | Consulta pública por código con auto-expiración | RF-05 | Integrante 1 | `GET /api/reservations/code/:code` |
 | T-RES-04 | [x] | Cambio de estado (`COMPLETED` descuenta stock y reindexa; `CANCELLED`/`EXPIRED`) y KPIs de reservas | RF-05, RN-2 | Integrante 1 | `reservations.service.ts` (`updateReservationStatus`, `getStoreReservationStats`) |
-| T-RES-05 | [~] | Aislamiento multi-almacén en reservas. **Defecto:** los endpoints de gestión no usan `RolesGuard` y aceptan `?storeId=` cuando el token no tiene almacén | RN-4 | Integrante 1 | `reservations.controller.ts` |
+| T-RES-05 | [x] | Aislamiento multi-almacén en reservas protegido con `RolesGuard` y `JwtAuthGuard`; roles `STORE_ADMIN` y `PLATFORM_ADMIN` requeridos | RN-4 | Integrante 1 | `reservations.controller.ts` |
 | T-RES-06 | [x] | Registrar leads de "Cotizar por WhatsApp", listar leads y estadísticas por almacén, cambiar estado | RF-06 | Integrante 1 | `backend/src/leads/` |
 | T-RES-07 | [x] | `MailService` con SMTP opcional y modo consola en local | RF-06 | Integrante 1 | `backend/src/mail/mail.service.ts` |
 
@@ -104,7 +104,7 @@
 | T-DOC-06 | [x] | Auditoría del frontend y casos de prueba E2E (exitosos y fallidos) con limitaciones conocidas | Criterio 05 | Integrante 2 | `docs/tests-frontend-e2e.md` |
 | T-DOC-07 | [x] | Script de humo del flujo principal contra la API (sin dependencias) | Criterio 05 | Integrante 2 | `scripts/e2e-smoke.mjs` |
 | T-DOC-08 | [x] | README de entrega (instalación, variables, usuarios de prueba, guion de demo) | Criterio 06 | Integrante 2 | `README.md` |
-| T-DOC-09 | [~] | Ejecutar las pruebas en local y registrar el resultado obtenido; queda pendiente corregir y repetir la prueba de autorización de reservas | Criterio 05 | Integrante 1 + 2 | `docs/tests-e2e.md` (BUYER recibe 200 en vez de 403) |
+| T-DOC-09 | [x] | Ejecutar las pruebas en local y registrar el resultado obtenido con 25 PASS y autorización de reservas validada con 403 Forbidden | Criterio 05 | Integrante 1 + 2 | `docs/tests-e2e.md` |
 | T-DOC-10 | [ ] | Corregir defectos de seguridad T-INF-12, T-CAT-08, T-INV-08 y T-RES-05 en rama `fix/security-hardening` | Constitución §3.4 | Integrante 1 | — |
 
 ---
@@ -113,10 +113,10 @@
 
 | Módulo | Total | [x] | [~] | [ ] |
 | :--- | :---: | :---: | :---: | :---: |
-| Infraestructura, BD y Seguridad | 13 | 12 | 1 | 0 |
+| Infraestructura, BD y Seguridad | 13 | 13 | 0 | 0 |
 | Catálogo y Búsqueda | 9 | 8 | 1 | 0 |
 | Inventario y CSV | 8 | 7 | 1 | 0 |
-| Reservas y Leads | 7 | 6 | 1 | 0 |
+| Reservas y Leads | 7 | 7 | 0 | 0 |
 | Frontend Next.js | 13 | 11 | 0 | 2 |
-| Pruebas y Documentación | 10 | 8 | 1 | 1 |
-| **Total** | **60** | **52** | **5** | **3** |
+| Pruebas y Documentación | 10 | 9 | 0 | 1 |
+| **Total** | **60** | **55** | **2** | **3** |

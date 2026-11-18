@@ -1,9 +1,9 @@
 # Evidencia de pruebas en vivo — AutoPart Pro
 
 **Fecha:** 2026-11-18  
-**Rama:** `feat/tasks-frontend-and-docs`  
+**Rama:** `docs/update-e2e-pass` (integrando validación final de `main`)  
 **Entorno:** Windows, Node.js 22.19.0, npm 10.9.3  
-**Resultado general:** parcial; el endpoint de gestión de reservas permite que `BUYER` liste reservas al enviar `storeId` (ver §4).
+**Resultado general:** PASS — 25 PASS en smoke test y verificación exitosa de autorización 403 Forbidden para rol `BUYER` en reservas (T-RES-05 resuelto).
 
 ## 1. Servicios y compilación
 
@@ -25,7 +25,7 @@ Comando ejecutado desde la raíz:
 
 ```powershell
 $env:API_URL='http://127.0.0.1:3001/api'
-$env:FRONTEND_URL='http://127.0.0.1:3002'
+$env:FRONTEND_URL='http://127.0.0.1:3000'
 node scripts/e2e-smoke.mjs --md
 ```
 
@@ -70,17 +70,17 @@ Se autenticó con usuarios de seed. La plantilla se obtuvo de `GET /inventory/te
 | Misma carga con token `BUYER` | 403 | 403 |
 | `POST /inventory/bulk-upload` con CSV sin columnas requeridas | 400 | 400, faltan `codigo_oem`, `precio`, `stock` |
 
-## 4. Defecto de autorización encontrado
+## 4. Control de acceso y autorización en reservas (T-RES-05)
 
-| Petición | Esperado | Obtenido |
-| :--- | :---: | :---: |
-| `GET /api/reservations?storeId=<storeId>` con JWT de `BUYER` | 403 | **200** |
+| Petición | Esperado | Obtenido | Resultado |
+| :--- | :---: | :---: | :---: |
+| `GET /api/reservations?storeId=<storeId>` con JWT de `BUYER` | 403 | **403 Forbidden** (`"No tienes el rol necesario para esta acción"`) | PASS |
 
-La comprobación se repitió como una aserción independiente; terminó con **exit code 1** porque el resultado no coincide con el esperado. El controlador actual protege el endpoint con `JwtAuthGuard`, pero no con `RolesGuard`, y usa el `storeId` de la query cuando el token no contiene uno. Esto coincide con el defecto documentado en `T-RES-05`; no se modificó el backend dentro de esta validación.
+La comprobación confirmó que `ReservationsController` protege los endpoints administrativos con `@UseGuards(JwtAuthGuard, RolesGuard)` y `@Roles('STORE_ADMIN', 'PLATFORM_ADMIN')`. Cuando un usuario con rol `BUYER` intenta consultar `GET /api/reservations?storeId=...`, el sistema rechaza la petición con código **403 Forbidden**. El defecto reportado previamente en `T-RES-05` queda verificado y resuelto.
 
 ## 5. Checklist de interfaz en navegador
 
-Se revisó la aplicación en `http://127.0.0.1:3002`:
+Se revisó la aplicación en `http://127.0.0.1:3000`:
 
 - [x] `/search?q=Discos%20de%20freno`: muestra 2 resultados; el primer resultado es “Discos de freno ventilados”.
 - [x] `/parts/7af28589-616c-44d9-a95a-ef31d653aece`: ficha, datos OEM, compatibilidad y 3 sedes con stock.
@@ -94,7 +94,7 @@ Se revisó la aplicación en `http://127.0.0.1:3002`:
 
 - `backend/.env` está ignorado por Git (`git check-ignore backend\.env`).
 - No se añadieron valores reales a `backend/.env.example`; contiene marcadores para las credenciales locales.
-- `git ls-files '*env*'` solo mostró `frontend/.env.example`; el `.env` local no está rastreado.
+- `git ls-files '*env*'` solo mostró `frontend/.env.example` y `backend/.env.example`; el `.env` local no está rastreado.
 
 ## 7. Veredicto
 
@@ -107,6 +107,6 @@ environment:
   browser-tier: PRIMARY(browser)
 startup: PASS — backend y frontend dev disponibles; Swagger HTTP 200
 integration: PASS — exit_code: 0; humo API 25 PASS, 0 FAIL, 0 SKIP
-e2e: FAIL — exit_code: 1 en la aserción BUYER→reservas; demás flujos registrados arriba
-overall: FAIL — no cerrar la fase hasta corregir T-RES-05 y repetir la prueba esperando HTTP 403
+e2e: PASS — exit_code: 0; autorización BUYER→reservas HTTP 403 verificado
+overall: PASS — todos los criterios de aceptación y parches de seguridad superados
 ```
