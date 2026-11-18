@@ -23,6 +23,14 @@ Al contrastar `backend/.env.example` contra los usos reales de `process.env` y `
   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` (usadas en `backend/src/mail/mail.service.ts`)
 - ✅ Todas las variables en `backend/.env.example` contienen únicamente placeholders seguros.
 
+### 1.3 Verificación de Configuración y Scripts (`docker-compose.yml` y `backend/package.json`)
+- **`docker-compose.yml`:** Define `postgres:16-alpine` (puerto `5433:5432`, usuario `repuestos_user`, BD `repuestos_db`) y `getmeili/meilisearch:v1.6` (puerto `7700:7700`), ambos con `healthcheck` y volúmenes persistentes (`postgres_data`, `meilisearch_data`).
+- **`backend/package.json`:**
+  - `npm run build` ejecuta `npx prisma generate && nest build` (genera `dist/src/main.js`, coherente con `tsconfig.json` y `Dockerfile`).
+  - `npm run start:dev` levanta NestJS en modo watch sobre `http://localhost:3001/api`.
+  - `npm run start:prod` y `backend/Dockerfile` utilizan `npx prisma db push && node dist/src/main.js`.
+  - **Nota técnica:** El directorio `backend/prisma/` no contiene carpeta `migrations/` aún; por ello, para un arranque local limpio se recomienda `npx prisma db push` (o `npx prisma migrate dev --name init` si se desea inicializar historial de migraciones) seguido de `npm run prisma:seed`.
+
 ---
 
 ## 2. Preparación del Entorno de Pruebas Local
@@ -34,14 +42,15 @@ docker compose up -d
 # 2. Configurar variables de entorno locales (no versionadas)
 cp backend/.env.example backend/.env
 
-# 3. Instalar dependencias, generar cliente Prisma, migrar y poblar datos iniciales
+# 3. Instalar dependencias, generar cliente Prisma, sincronizar esquema y poblar datos iniciales
 cd backend
 npm install
 npx prisma generate
-npx prisma migrate dev
+npx prisma db push
 npm run prisma:seed
 
-# 4. Iniciar servidor NestJS en desarrollo (http://localhost:3001/api)
+# 4. Compilar y verificar arranque en desarrollo (http://localhost:3001/api)
+npm run build
 npm run start:dev
 ```
 
@@ -60,6 +69,7 @@ Documentación interactiva disponible en: `http://localhost:3001/api/docs`
 | **AUTH-03** | Registro con correo duplicado | `POST /api/auth/register` | Mismo email ya registrado | **`401 Unauthorized`**: `"El email ya está registrado"`. |
 | **AUTH-04** | Login con contraseña incorrecta | `POST /api/auth/login` | `{ "email": "comprador1@test.co", "password": "WrongPassword" }` | **`401 Unauthorized`**: `"Credenciales inválidas"`. |
 | **AUTH-05** | Validación DTO (contraseña < 6 caracteres o campo extra) | `POST /api/auth/login` | `{ "email": "no-email", "password": "123", "extra": true }` | **`400 Bad Request`**: Rechazado por `ValidationPipe` (`whitelist` + `forbidNonWhitelisted`). |
+| **AUTH-06** | Recuperación de contraseña sin SMTP en entorno `production` | `POST /api/auth/forgot-password` | `{ "email": "comprador1@test.co" }` con `NODE_ENV=production` y sin SMTP | **`200 OK`**: Responde sin exponer `devCode` en el JSON (corrección de seguridad aplicada en `AuthService.forgotPassword`). |
 
 ---
 
@@ -84,6 +94,7 @@ Documentación interactiva disponible en: `http://localhost:3001/api/docs`
 | **RES-03** | Reserva fallida por stock insuficiente | `POST /api/reservations` | `{ "partId": "<UUID_VALIDO>", "locationId": "<UUID_SEDE>", "customerName": "Carlos Gómez", "customerPhone": "3001234567", "quantity": 9999 }` | **`400 Bad Request`**: `"Existencias insuficientes en la sede <Nombre>. Stock disponible: X unidades."`. |
 | **RES-04** | Reserva fallida por repuesto o sede inexistente | `POST /api/reservations` | `partId` o `locationId` inexistente | **`404 Not Found`**: `"El repuesto seleccionado no existe"` o `"La sede física seleccionada no existe"`. |
 | **RES-05** | Gestión de reservas sin token | `PATCH /api/reservations/<ID>/status` | Sin header `Authorization` | **`401 Unauthorized`**: Bloqueado por `JwtAuthGuard`. |
+| **RES-06** | Intento de `BUYER` de consultar o alterar reservas pasando `?storeId=` | `GET /api/reservations?storeId=<UUID_AJENO>` | `Authorization: Bearer <TOKEN_BUYER>` | **`403 Forbidden`**: Bloqueado por `RolesGuard` (`@Roles('STORE_ADMIN', 'PLATFORM_ADMIN')`). |
 
 ---
 
@@ -94,4 +105,18 @@ Documentación interactiva disponible en: `http://localhost:3001/api/docs`
 | **MED-01** | Consulta de imagen existente en BD | `GET /api/media/<filename>` | Público | **`200 OK`**: Retorna binario con `Content-Type` de imagen y `Cache-Control: immutable`. |
 | **MED-02** | Archivo con extensión/MIME no permitido (ej. `.exe` o `.pdf`) | Endpoint de carga con `IMAGE_MULTER_OPTIONS` | Archivo `application/pdf` o `.txt` | **`400 Bad Request`**: `"Solo se admiten formatos de imagen válidos (JPG, PNG, WEBP, GIF, AVIF)"`. |
 | **MED-03** | Consulta de imagen inexistente | `GET /api/media/no-existe.png` | Público | **`404 Not Found`**: `"Imagen no encontrada"`. |
+
+---
+
+## 4. Limitaciones Conocidas y Remediaciones de Seguridad Aplicadas
+
+### 4.1 Remediaciones aplicadas en esta auditoría
+1. **Exposición de OTP en `AuthService.forgotPassword`:** Se restringió el retorno de `devCode` en la respuesta HTTP exclusivamente a `process.env.NODE_ENV === 'development'`, evitando que en producción sin SMTP se filtre el código de recuperación.
+2. **Control de acceso e IDOR en `ReservationsController`:** Se añadió `@UseGuards(JwtAuthGuard, RolesGuard)` y `@Roles('STORE_ADMIN', 'PLATFORM_ADMIN')` a `GET /api/reservations/stats`, `GET /api/reservations` y `PATCH /api/reservations/:id/status`, y se restringió el uso del parámetro `?storeId=` exclusivamente al rol `PLATFORM_ADMIN` (`resolveAuthorizedStoreId`).
+
+### 4.2 Limitaciones conocidas
+- **Envío de correo sin SMTP configurado:** En desarrollo local sin `SMTP_USER`/`SMTP_PASS`, `MailService` opera en modo resiliente imprimiendo los mensajes y códigos OTP únicamente en la consola del servidor.
+- **Migraciones Prisma:** `backend/prisma/` no incluye carpeta `migrations/` aún; el despliegue y arranque local usan `npx prisma db push` (coherente con `backend/Dockerfile` y `package.json`).
+- **Ejecución de pruebas en vivo:** Las pruebas HTTP de la sección 3 requieren levantar previamente `docker compose up -d`, instalar dependencias en `backend/` (`npm install`) y ejecutar `npm run prisma:seed`.
+
 

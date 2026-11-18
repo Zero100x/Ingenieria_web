@@ -40,7 +40,7 @@ Construir una plataforma web B2C/B2B para la búsqueda, comparación, cotizació
 ### RF-03: Búsqueda Avanzada en Meilisearch (`search`)
 - **Descripción:** Motor de búsqueda tolerante a errores tipográficos con filtros facetados y ordenamiento sobre el índice `parts`.
 - **Criterios de Aceptación:**
-  - `GET /api/search` permite buscar por nombre, número de parte, marca, categoría, vehículo (`makes`, `models`, `years`, `versions`), condición (`NEW`, `USED`, `REFURBISHED`), rango de precios (`minPrice`, `maxPrice`) y disponibilidad (`isAvailable`).
+  - `GET /api/search/parts` permite buscar por nombre, número de parte, marca, categoría, vehículo (`make`, `model`, `year`, `version`), condición (`NEW`, `USED`, `REFURBISHED`), almacén (`store`), rango de precios (`minPrice`, `maxPrice`) y ordenamiento (`sortBy`, `sortOrder`).
   - Los resultados soportan ordenamiento por `minPrice`, `maxPrice`, `totalStock`, `updatedAt` y `name`.
 
 ### RF-04: Inventario Multi-Sede y Carga Masiva CSV (`inventory`, `locations`)
