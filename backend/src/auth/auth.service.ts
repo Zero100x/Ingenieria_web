@@ -210,13 +210,14 @@ export class AuthService {
       otpCode,
     );
 
+    const isDev = process.env.NODE_ENV === 'development';
+
     return {
       message: smtpSent
         ? `Hemos enviado un código de verificación de 6 dígitos al correo ${user.email}`
         : `Código de verificación generado para ${user.email}`,
       smtpSent,
-      // En modo desarrollo local (sin SMTP configurado), devolvemos el código para poder probar el flujo al instante
-      devCode: !smtpSent ? otpCode : undefined,
+      ...(isDev && !smtpSent ? { devCode: otpCode } : {}),
     };
   }
 

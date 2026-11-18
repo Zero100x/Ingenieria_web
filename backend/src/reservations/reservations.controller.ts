@@ -14,12 +14,24 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto, UpdateReservationStatusDto } from './dto/reservations.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { ReservationStatus } from '@prisma/client';
 
 @ApiTags('Reservations')
 @Controller('reservations')
 export class ReservationsController {
   constructor(private reservationsService: ReservationsService) {}
+
+  private resolveAuthorizedStoreId(req: any, queryStoreId?: string): string {
+    const roles: string[] = req.user?.roles || [];
+    const isPlatformAdmin = roles.includes('PLATFORM_ADMIN');
+    const storeId = isPlatformAdmin ? queryStoreId || req.user?.storeId : req.user?.storeId;
+    if (!storeId) {
+      throw new BadRequestException('Usuario no tiene un almacén asignado');
+    }
+    return storeId;
+  }
 
   @Post()
   @ApiOperation({ summary: 'Crear reserva para retiro en sede física (Click & Collect - Público)' })
@@ -36,19 +48,18 @@ export class ReservationsController {
 
   @Get('stats')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STORE_ADMIN', 'PLATFORM_ADMIN')
   @ApiOperation({ summary: 'Obtener métricas y KPIs de reservas en mostrador (Almacén)' })
   getReservationStats(@Request() req: any, @Query('storeId') queryStoreId?: string) {
-    const storeId = req.user?.storeId || queryStoreId;
-    if (!storeId) {
-      throw new BadRequestException('Usuario no tiene un almacén asignado');
-    }
+    const storeId = this.resolveAuthorizedStoreId(req, queryStoreId);
     return this.reservationsService.getStoreReservationStats(storeId);
   }
 
   @Get()
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STORE_ADMIN', 'PLATFORM_ADMIN')
   @ApiOperation({ summary: 'Listar reservas del almacén (Protegido)' })
   @ApiQuery({ name: 'status', required: false, enum: ReservationStatus })
   @ApiQuery({ name: 'search', required: false, description: 'Buscar por código, cliente o repuesto' })
@@ -64,10 +75,7 @@ export class ReservationsController {
     @Query('limit') limit?: number,
     @Query('storeId') queryStoreId?: string,
   ) {
-    const storeId = req.user?.storeId || queryStoreId;
-    if (!storeId) {
-      throw new BadRequestException('Usuario no tiene un almacén asignado');
-    }
+    const storeId = this.resolveAuthorizedStoreId(req, queryStoreId);
     return this.reservationsService.getStoreReservations(storeId, {
       status,
       search,
@@ -79,7 +87,8 @@ export class ReservationsController {
 
   @Patch(':id/status')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STORE_ADMIN', 'PLATFORM_ADMIN')
   @ApiOperation({ summary: 'Registrar entrega en mostrador o cancelar reserva (Almacén)' })
   updateReservationStatus(
     @Param('id') id: string,
@@ -87,10 +96,7 @@ export class ReservationsController {
     @Request() req: any,
     @Query('storeId') queryStoreId?: string,
   ) {
-    const storeId = req.user?.storeId || queryStoreId;
-    if (!storeId) {
-      throw new BadRequestException('Usuario no tiene un almacén asignado');
-    }
+    const storeId = this.resolveAuthorizedStoreId(req, queryStoreId);
     return this.reservationsService.updateReservationStatus(id, storeId, dto);
   }
 }
