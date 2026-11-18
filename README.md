@@ -3,6 +3,8 @@
 Proyecto Final de **Ingeniería Web** — Universidad Cooperativa de Colombia (UCC), campus Pasto.
 Desarrollado con **Spec-Driven Development (SDD)** y **GitHub Spec Kit**.
 
+Enlace Video de prueba: https://youtu.be/k0-_dRxYbKc
+
 AutoPart Pro conecta a compradores y talleres con almacenes de repuestos de Pasto. El comprador busca por texto, referencia OEM o por su vehículo (marca → modelo → año → versión), compara opciones y **reserva para recoger en la sede** (*Click & Collect*), sin pagos en línea. Cada almacén gestiona su inventario multi-sede, carga productos por CSV y atiende reservas y consultas desde un panel B2B.
 
 ---
